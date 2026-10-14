@@ -23,7 +23,6 @@ const safeDemoSave=items=>{try{localStorage.setItem(demoKey,JSON.stringify(items
 const pollStatus=$('pollStatus');
 function showPoll(items){items=Array.isArray(items)?items:[];const boys=items.filter(v=>v.prediction==='Boy');const girls=items.filter(v=>v.prediction==='Girl');const total=boys.length+girls.length;
  $('boyCount').textContent=`${boys.length} (${total?Math.round(boys.length*100/total):0}%)`; $('girlCount').textContent=`${girls.length} (${total?Math.round(girls.length*100/total):0}%)`;
- $('boyNumber').textContent=boys.length; $('girlNumber').textContent=girls.length; $('boyPercent').textContent=(total?Math.round(boys.length*100/total):0)+'%'; $('girlPercent').textContent=(total?Math.round(girls.length*100/total):0)+'%';
  $('boyBar').style.width=(total?boys.length*100/total:0)+'%';$('girlBar').style.width=(total?girls.length*100/total:0)+'%';$('totalVotes').textContent=`${total} prediction${total===1?'':'s'} so far`;
  for(const [id,votes] of [['boyNames',boys],['girlNames',girls]]){const list=$(id);list.replaceChildren();if(!votes.length){const li=document.createElement('li');li.textContent='Be the first!';list.appendChild(li);}else votes.forEach(v=>{const li=document.createElement('li');li.textContent=String(v.name||'Guest');list.appendChild(li);});}}
 // JSONP is used for reading because Google Apps Script redirects can trigger
@@ -40,9 +39,9 @@ function getLiveVotes(){return new Promise((resolve,reject)=>{
  document.head.appendChild(tag);
 });}
 async function refreshPoll(){
- if(!pollApi){showPoll(safeDemoRead());$('liveIndicator').textContent='Demo only';return;}
- try{const data=await getLiveVotes();if(!data.ok)throw Error(data.error||'Unable to load results');liveVotes=data.votes||[];showPoll(liveVotes);$('liveIndicator').textContent='● Live';$('liveIndicator').classList.add('connected');pollStatus.textContent='';}
- catch(e){$('liveIndicator').textContent='Connection issue';$('liveIndicator').classList.remove('connected');pollStatus.textContent='Could not load live predictions: '+e.message;}
+ if(!pollApi){showPoll(safeDemoRead());return;}
+ try{const data=await getLiveVotes();if(!data.ok)throw Error(data.error||'Unable to load results');liveVotes=data.votes||[];showPoll(liveVotes);}
+ catch(e){pollStatus.textContent='Could not load live predictions: '+e.message;}
 }
 $('pollMode').textContent=pollApi?'Live shared predictions — names and votes are public':'Local test mode — connect Google Sheets to share votes with everyone';
 
@@ -55,12 +54,6 @@ function celebratePrediction(prediction,name){
  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){for(let i=0;i<22;i++){const piece=document.createElement('span');piece.textContent=i%3===0?'✿':i%3===1?'♥':'✦';piece.style.left=(i*47%100)+'%';piece.style.color=prediction==='Boy'?'#6bb7df':'#e58fae';piece.style.animationDelay=(i%9*.15)+'s';piece.style.fontSize=(13+i%5*4)+'px';confetti.appendChild(piece);}}
  panel.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
 }
-// Preview reactions without saving a vote.
-$('previewBaby').addEventListener('click',()=>{
- const choice=document.querySelector('input[name="prediction"]:checked');
- if(!choice){$('pollStatus').textContent='Please select Baby Boy or Baby Girl first.';return;}
- celebratePrediction(choice.value,$('pollName').value.trim()||'dear guest');
-});
 document.querySelectorAll('input[name="prediction"]').forEach(radio=>radio.addEventListener('change',()=>{
  celebratePrediction(radio.value,$('pollName').value.trim()||'dear guest');
 }));
@@ -96,17 +89,21 @@ refreshPoll();if(pollApi)setInterval(refreshPoll,30000);
 const eventUrl=()=>window.location.href.split('#')[0];$('share').addEventListener('click',async()=>{const data={title:'Janak & Rajni Baby Shower',text:'🌸 You are invited! Sunday, 25 October 2026 at 11:30 AM.',url:eventUrl()};if(navigator.share){try{await navigator.share(data);return;}catch(e){if(e.name==='AbortError')return;}}if(navigator.clipboard&&window.isSecureContext){try{await navigator.clipboard.writeText(`${data.text}\n${data.url}`);$('shareStatus').textContent='Invitation link copied!';return;}catch(e){}}whatsappMessage(`${data.text}\n${data.url}`);});
 const start='20261025T113000',end='20261025T143000';const calendarUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('Janak & Rajni Baby Shower')+'&dates='+start+'/'+end+'&ctz=Asia%2FKolkata&details='+encodeURIComponent('Join us for a blooming beautiful baby shower!')+'&location='+encodeURIComponent('B140, Harikrishna Township, Ajwa Road, Vadodara');$('calendar').href=calendarUrl;$('calendar').target='_blank';$('calendar').rel='noopener';
 
-// One-tap envelope opening: user gesture permits audible music on most browsers.
+// Open invitation envelope and unlock the page.
 (function(){
- const gate=document.getElementById('invitationGate');
- const button=document.getElementById('openEnvelope');
- if(!gate||!button)return;
- document.body.classList.add('gate-locked');
- button.addEventListener('click',function(){
-   if(gate.classList.contains('opening'))return;
-   gate.classList.add('opening');
-   const audio=document.getElementById('backgroundMusic');
-   if(audio){audio.volume=.55;audio.play().catch(function(){/* Browser or missing file */});}
-   window.setTimeout(function(){gate.classList.add('gate-done');document.body.classList.remove('gate-locked');button.disabled=true;},1400);
- });
+  const gate=document.getElementById('invitationGate');
+  const button=document.getElementById('openEnvelope');
+  if(!gate||!button)return;
+  document.body.classList.add('gate-locked');
+  button.addEventListener('click',function(){
+    if(gate.classList.contains('opening'))return;
+    gate.classList.add('opening');
+    const audio=document.getElementById('backgroundMusic');
+    if(audio){audio.volume=.55;audio.play().catch(function(){});}
+    window.setTimeout(function(){
+      gate.classList.add('gate-done');
+      document.body.classList.remove('gate-locked');
+      button.disabled=true;
+    },1400);
+  });
 })();
