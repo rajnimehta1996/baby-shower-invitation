@@ -13,7 +13,7 @@
       gate.classList.add('gate-done');
       document.body.classList.remove('gate-locked');
       button.disabled=true;
-    },1400);
+    },2500);
   });
 })();
 
@@ -43,6 +43,7 @@ const safeDemoSave=items=>{try{localStorage.setItem(demoKey,JSON.stringify(items
 const pollStatus=$('pollStatus');
 function showPoll(items){items=Array.isArray(items)?items:[];const boys=items.filter(v=>v.prediction==='Boy');const girls=items.filter(v=>v.prediction==='Girl');const total=boys.length+girls.length;
  $('boyCount').textContent=`${boys.length} (${total?Math.round(boys.length*100/total):0}%)`; $('girlCount').textContent=`${girls.length} (${total?Math.round(girls.length*100/total):0}%)`;
+ $('boyNumber').textContent=boys.length; $('girlNumber').textContent=girls.length; $('boyPercent').textContent=(total?Math.round(boys.length*100/total):0)+'%'; $('girlPercent').textContent=(total?Math.round(girls.length*100/total):0)+'%';
  $('boyBar').style.width=(total?boys.length*100/total:0)+'%';$('girlBar').style.width=(total?girls.length*100/total:0)+'%';$('totalVotes').textContent=`${total} prediction${total===1?'':'s'} so far`;
  for(const [id,votes] of [['boyNames',boys],['girlNames',girls]]){const list=$(id);list.replaceChildren();if(!votes.length){const li=document.createElement('li');li.textContent='Be the first!';list.appendChild(li);}else votes.forEach(v=>{const li=document.createElement('li');li.textContent=String(v.name||'Guest');list.appendChild(li);});}}
 // JSONP is used for reading because Google Apps Script redirects can trigger
@@ -59,9 +60,9 @@ function getLiveVotes(){return new Promise((resolve,reject)=>{
  document.head.appendChild(tag);
 });}
 async function refreshPoll(){
- if(!pollApi){showPoll(safeDemoRead());return;}
- try{const data=await getLiveVotes();if(!data.ok)throw Error(data.error||'Unable to load results');liveVotes=data.votes||[];showPoll(liveVotes);}
- catch(e){pollStatus.textContent='Could not load live predictions: '+e.message;}
+ if(!pollApi){showPoll(safeDemoRead());$('liveIndicator').textContent='Demo only';return;}
+ try{const data=await getLiveVotes();if(!data.ok)throw Error(data.error||'Unable to load results');liveVotes=data.votes||[];showPoll(liveVotes);$('liveIndicator').textContent='● Live';$('liveIndicator').classList.add('connected');pollStatus.textContent='';}
+ catch(e){$('liveIndicator').textContent='Connection issue';$('liveIndicator').classList.remove('connected');pollStatus.textContent='Could not load live predictions: '+e.message;}
 }
 $('pollMode').textContent=pollApi?'Live shared predictions — names and votes are public':'Local test mode — connect Google Sheets to share votes with everyone';
 
