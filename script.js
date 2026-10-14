@@ -1,3 +1,23 @@
+// Open invitation envelope and unlock the page.
+(function(){
+  const gate=document.getElementById('invitationGate');
+  const button=document.getElementById('openEnvelope');
+  if(!gate||!button)return;
+  document.body.classList.add('gate-locked');
+  button.addEventListener('click',function(){
+    if(gate.classList.contains('opening'))return;
+    gate.classList.add('opening');
+    const audio=document.getElementById('backgroundMusic');
+    if(audio){audio.volume=.55;audio.play().catch(function(){});}
+    window.setTimeout(function(){
+      gate.classList.add('gate-done');
+      document.body.classList.remove('gate-locked');
+      button.disabled=true;
+    },1400);
+  });
+})();
+
+
 'use strict';
 const eventDate = new Date('2026-10-25T11:30:00+05:30');
 const $ = id => document.getElementById(id);
@@ -88,22 +108,3 @@ $('pollForm').addEventListener('submit',async event=>{
 refreshPoll();if(pollApi)setInterval(refreshPoll,30000);
 const eventUrl=()=>window.location.href.split('#')[0];$('share').addEventListener('click',async()=>{const data={title:'Janak & Rajni Baby Shower',text:'🌸 You are invited! Sunday, 25 October 2026 at 11:30 AM.',url:eventUrl()};if(navigator.share){try{await navigator.share(data);return;}catch(e){if(e.name==='AbortError')return;}}if(navigator.clipboard&&window.isSecureContext){try{await navigator.clipboard.writeText(`${data.text}\n${data.url}`);$('shareStatus').textContent='Invitation link copied!';return;}catch(e){}}whatsappMessage(`${data.text}\n${data.url}`);});
 const start='20261025T113000',end='20261025T143000';const calendarUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('Janak & Rajni Baby Shower')+'&dates='+start+'/'+end+'&ctz=Asia%2FKolkata&details='+encodeURIComponent('Join us for a blooming beautiful baby shower!')+'&location='+encodeURIComponent('B140, Harikrishna Township, Ajwa Road, Vadodara');$('calendar').href=calendarUrl;$('calendar').target='_blank';$('calendar').rel='noopener';
-
-// Open invitation envelope and unlock the page.
-(function(){
-  const gate=document.getElementById('invitationGate');
-  const button=document.getElementById('openEnvelope');
-  if(!gate||!button)return;
-  document.body.classList.add('gate-locked');
-  button.addEventListener('click',function(){
-    if(gate.classList.contains('opening'))return;
-    gate.classList.add('opening');
-    const audio=document.getElementById('backgroundMusic');
-    if(audio){audio.volume=.55;audio.play().catch(function(){});}
-    window.setTimeout(function(){
-      gate.classList.add('gate-done');
-      document.body.classList.remove('gate-locked');
-      button.disabled=true;
-    },1400);
-  });
-})();
